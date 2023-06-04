@@ -21,7 +21,7 @@ CREATE TABLE `commit`(
     `last_version` varchar(500) not null,
     `upgrade` varchar(5000) not null,
     `downgrade` varchar(5000) not null,
-    `time` varchar(5000) not null,
+    `time` bigint not null,
     `msg` varchar(500) not null,
     PRIMARY KEY (`version`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;

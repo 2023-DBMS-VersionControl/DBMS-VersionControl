@@ -3,6 +3,7 @@ import mysql.connector
 import uuid
 import datetime
 import diff
+import time
 
 
 def merge(mainBranchName, targetBranchName):
@@ -51,8 +52,9 @@ def merge(mainBranchName, targetBranchName):
         branchInfo = cursor.fetchall()
         branchID = branchInfo[0]
         now = datetime.datetime.now()
+        unixtime = time.mktime(now.timetuple())
         insert = "INSERT INTO commit (cid, version, last_version, branch, upgrade, downgrade, time, msg) VALUES (%s, %s, %s, %s, %s, %s,%s, %s)"
-        val = (version, last_version, branchID, upgrade, downgrade, now.strftime("%Y%m%d_%H%M"), msg)
+        val = (version, last_version, branchID, upgrade, downgrade, unixtime, msg)
         cursor.execute(insert, val)
 
         # update branch table
