@@ -13,3 +13,4 @@ CREATE TABLE `teacher` (
   `Department` varchar(20) NOT NULL,
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+

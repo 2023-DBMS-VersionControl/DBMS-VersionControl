@@ -11,6 +11,10 @@ CREATE TABLE `branch`(
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 
+insert into branch values ("func1", "testt1");
+insert into branch values ("func2", "testt2");
+
+
 CREATE TABLE `commit`(
     `version` varchar(500) not null,
     `branch` varchar(500) not null,
@@ -41,9 +45,5 @@ CREATE TABLE `user`(
     PRIMARY KEY (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
-insert into user set values ("testtt", "elaine", "elaine.com", "testtt1", "func1");
+insert into user values ("testtt", "elaine", "elaine.com", "testtt1", "func1");
 
-
-
-
-use userdb;

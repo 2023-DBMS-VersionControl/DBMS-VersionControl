@@ -1,62 +1,85 @@
 # description
-    # 1. new == False: 
-        # delete old sql file from the user's dir, dump newbranch's schema to user dir, update user table
-    # 2. new == True: 
-        # delete old sql file from the user's dir, update user table
-        # since creating new branch does not require a commit, we don't update branch table
+# 1. new == False:
+    # update user table
+    # check if tail == current schema
+    # if not: warn, exit
+    # directly change userdb's schema: drop + create
+# 2. new == True:
+    # update user table
+    # since creating new branch does not require a commit, we don't update branch table
 
 
 # import packages
 import os
+import mysql.connector
+import dump
+import diff
 
 
 # function
-def checkout(vc_cursor, newBranchName, new=False):
+def checkout(newBranchName, new=False):
     print("start checking out.")
+    connection1 = mysql.connector.connect(
+        user="root", password="tubecity0212E_", host='127.0.0.1', port="3306", database='vcdb')
+    print("VCDB connected.")
+    vc_cursor = connection1.cursor()
+
+    connection2 = mysql.connector.connect(
+    user="root", password="tubecity0212E_", host='127.0.0.1', port="3306", database='userdb')
+    print("user DB connected.")
+    user_cursor = connection2.cursor()
+
+    # get user's current branch name.
+    # assume userid is global variable
+    query = "SELECT current_branch FROM vcdb.user where uid = %s;"
+    vc_cursor.execute(query, ["testtt"])
+    currentBranchName = vc_cursor.fetchone()[0]
+    
     try:
         if new == False:
             # error check: whether the specified branch name exists in the branchname list
             query = "SELECT name FROM vcdb.branch;"
             vc_cursor.execute(query)
             allBranchNames = vc_cursor.fetchall()
-            allBranchNames = [ "%s" % x for x in allBranchNames]
+            allBranchNames = ["%s" % x for x in allBranchNames]
             if newBranchName not in allBranchNames:
-                return "The specified branch name does not exists."
+                print("The specified branch name does not exists.")
+                return
 
-            # dump newbranch's schema to user dir
-                # first we import newBranchName schema, then we export it to user's desktop folder named "sql"
-            fd = open(f"../branch_tail_schema/{newBranchName}.sql", 'r')
-            newBranchSchemaFile = fd.read()
-            with open(f"{desktopPath}/sql/{newBranchName}.sql", 'w') as f:
-                f.write(newBranchSchemaFile)
-        
+            # check if tail == current schema
+            # dump current userdb's schema
+            dump.dump(user_cursor)
+            # check differences
+            userCurrentSchema = diff.readSqlFile(f"./tmpfile.sql")
+            currentBranchTail = diff.readSqlFile(f"./branch_tail_schema/{currentBranchName}.sql")
+            result = diff.get_diff(userCurrentSchema, currentBranchTail)
+            print("======================================================")
+            print(result)
+
+
         else:
             # error check: whether the specified branch name exists in the branchname list
             query = "SELECT name FROM vcdb.branch;"
             vc_cursor.execute(query)
             allBranchNames = vc_cursor.fetchall()
-            allBranchNames = [ "%s" % x for x in allBranchNames]
+            allBranchNames = ["%s" % x for x in allBranchNames]
             if newBranchName in allBranchNames:
-                return "Please create a branch name that is not identical to the existing ones."
+                print("Please create a branch name that is not identical to the existing ones.")
 
-
-        # delete old sql file from the user's dir 
-            # first get current user's branchname
-            # we assume user put their sql file in their desktop folder named "sql"
-        global userid
-        query = "SELECT current_branch FROM vcdb.user where uid = %s;"
-        vc_cursor.execute(query, userid)
-        branchName = vc_cursor.fetchone()[0]
-        desktopPath = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop') 
-        os.remove(f"{desktopPath}/sql/{branchName}.sql")
 
         # update user table
         query = "UPDATE user SET current_branch = (%s) WHERE uid = %s;"
-        vc_cursor.execute(query, [newBranchName, userid])
+        vc_cursor.execute(query, [newBranchName, ["testtt"]])
+
 
         # print success message
-        return "Successfully checked out to branch {newBranchName}."
-
+        print("Successfully checked out to branch {newBranchName}.")
+        connection1.close()
+        connection2.close()
+        return
 
     except Exception as e:
         print(e)
+
+
+checkout("func1", False)

@@ -1,4 +1,4 @@
-# description
+# 到時候替換成品歷的init.py
 
 
 # import packages
@@ -31,20 +31,23 @@ alls = user_cursor.fetchall()
 print(alls)
 
 
-#####################################################################
-@app.route('/', methods=["GET", "POST"])
-def index():
-    return "Welcome."
 
 
 
-@app.route('/checkout', methods=['GET'])
-def checkout():
-    global vc_cursor
-    result = checkout2.checkout(vc_cursor, "func1", False)
-    return jsonify({'return': str(result)})
+# #####################################################################
+# @app.route('/', methods=["GET", "POST"])
+# def index():
+#     return "Welcome."
 
 
-if __name__ == '__main__':
-    print("HI!")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+
+# @app.route('/checkout', methods=['GET'])
+# def checkout():
+#     global vc_cursor
+#     result = checkout2.checkout(vc_cursor, "func1", False)
+#     return jsonify({'return': str(result)})
+
+
+# if __name__ == '__main__':
+#     print("HI!")
+#     app.run(host='0.0.0.0', port=5001, debug=True)

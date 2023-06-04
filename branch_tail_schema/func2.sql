@@ -15,7 +15,6 @@ CREATE TABLE `teacher` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 
-
 CREATE TABLE `course` (
   `Id` varchar(20) NOT NULL,
   `Name` varchar(10) NOT NULL,
