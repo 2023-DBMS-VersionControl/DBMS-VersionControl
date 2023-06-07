@@ -28,7 +28,7 @@ def init_connections():
     print("user DB connected.")
 
     connection3 = mysql.connector.connect(
-        user="root", password="mypassword", host='140.112.106.237', port="16918", database='userdb')
+        user="root", password="mypassword", host='140.112.106.237', port="16919", database='vcdb')
     # globals.connection2 = connection2
     # globals.user_cursor = connection2.cursor()
     print("lab DB connected.")
