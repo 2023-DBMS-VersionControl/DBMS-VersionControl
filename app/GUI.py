@@ -247,8 +247,9 @@ class LoginPage(tk.Frame):
     def login_user(self, user_db, pwd, host, user_db_name,name, email):
         try:
             user.login(user_db, pwd, host, user_db_name, name, email)
+            user.getBnameFromBid()
             messagebox.showinfo('Login', "Login successfully.")
-            print(globals.current_uid, globals.current_version, globals.current_bid)
+            print(globals.current_uid, globals.current_version, globals.current_bid, globals.current_branch_name)
             self.controller.show_frame(CommitPage)
         except Exception as e:
             print(e)
@@ -337,6 +338,88 @@ class LogPage(tk.Frame):
 
 
 
+# class MergePage(tk.Frame):
+#     def __init__(self, parent, controller):
+#         tk.Frame.__init__(self, parent)
+#         self.controller = controller
+
+#         self.frames = {}
+
+#         label = tk.Label(self, text="Merge")
+#         label.grid(row=0, column=0, columnspan=2, pady=10, padx=10)
+
+#         merge_main_var = tk.StringVar()
+#         merge_target_var = tk.StringVar()
+#         self.fixed_sql_script_var = tk.StringVar()
+
+#         merge_target_label = tk.Label(self, text='Merge Branch from')
+#         merge_target_label.grid(row=1, column=0, sticky='e')
+#         merge_target_entry = tk.Entry(self, textvariable=merge_target_var)
+#         merge_target_entry.grid(row=1, column=1)
+
+#         merge_main_label = tk.Label(self, text='To:')
+#         merge_main_label.grid(row=2, column=0, sticky='e')
+#         merge_main_entry = tk.Entry(self, textvariable=merge_main_var)
+#         # merge_main_entry.insert(0, str(merge.getBranchName(current_bid)))
+#         merge_main_entry.grid(row=2, column=1)
+        
+#         merge_main_label = tk.Label(self, text='Merge Conflict:')
+#         merge_main_label.grid(row=3, column=0, sticky='e')
+#         self.result_text = tk.Text(self, height=30, width=50)
+#         self.result_text.grid(row=4, column=0, columnspan=2, pady=10)
+
+#         merge_button = tk.Button(
+#             self,
+#             text='merge',
+#             command=lambda: self.merge_GUI(
+#                 merge_main_var.get(), merge_target_var.get()
+#             ),
+#         )
+#         merge_button.grid(row=5, column=0, columnspan=2, pady=10)
+
+#         conflict_button = tk.Button(
+#             self,
+#             text='solve conflict',
+#             command=lambda: self.after_merge_GUI(
+#                 merge_main_var.get(), merge_target_var.get(), self.fixed_sql_script_var.get()
+#             ),
+#         )
+#         conflict_button.grid(row=5, column=2, columnspan=5, pady=10)
+
+
+#     def merge_GUI(self, main_bname, target_bname):
+#         try:
+#             is_merged, conflict_msg = merge.merge(main_bname, target_bname)
+#             if is_merged:
+#                 messagebox(conflict_msg)
+#             else:
+#                 self.result_text.delete(1.0, tk.END)  # Clear previous content
+#                 self.result_text.insert(tk.END, conflict_msg)  # Update with the return value
+#                 print(main_bname, target_bname)
+        
+#         except Exception as e:
+#             print(e)
+#             messagebox.showinfo('Merge', e)
+    
+#     def after_merge_GUI(self, main_bname, target_bname, fixed_sql_script):
+#         try:
+#             is_merged, conflict_msg = merge.merge_after_conflict_fixed(main_bname, target_bname, fixed_sql_script)
+#             if is_merged:
+#                 messagebox(conflict_msg)
+#             else:
+#                 self.result_text.delete(1.0, tk.END)  # Clear previous content
+#                 self.result_text.insert(tk.END, conflict_msg)  # Update with the return value
+#                 print(main_bname, target_bname)
+        
+#         except Exception as e:
+#             print(e)
+#             messagebox.showinfo('Merge', e)
+
+#     def update_merge_main_entry(self, value, conflict_var):
+#         self.merge_main_entry = tk.Entry(self, textvariable=conflict_var)
+#         self.merge_main_entry.delete(0, tk.END)  # Clear previous content
+#         self.merge_main_entry.insert(0, value)
+
 class MergePage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -349,23 +432,31 @@ class MergePage(tk.Frame):
 
         merge_main_var = tk.StringVar()
         merge_target_var = tk.StringVar()
-        conflict_var = tk.StringVar()
+        self.fixed_sql_script_var = tk.StringVar()
 
+        # target branch
         merge_target_label = tk.Label(self, text='Merge Branch from')
         merge_target_label.grid(row=1, column=0, sticky='e')
         merge_target_entry = tk.Entry(self, textvariable=merge_target_var)
         merge_target_entry.grid(row=1, column=1)
 
+        #main branch
         merge_main_label = tk.Label(self, text='To:')
         merge_main_label.grid(row=2, column=0, sticky='e')
-        merge_main_entry = tk.Entry(self, textvariable=merge_main_var)
-        # merge_main_entry.insert(0, str(merge.getBranchName(current_bid)))
-        merge_main_entry.grid(row=2, column=1)
-        
-        merge_main_label = tk.Label(self, text='Merge Conflict:')
-        merge_main_label.grid(row=3, column=0, sticky='e')
+        self.merge_main_entry = tk.Entry(self, textvariable=merge_main_var)
+        self.merge_main_entry.grid(row=2, column=1)
+        get_branch_button = tk.Button(
+            self,
+            text='Get Current Branch',
+            command=lambda: self.get_current_branch(),
+        )
+        get_branch_button.grid(row=3, column=0, columnspan=2, pady=10)
+
+
+        merge_conflict_label = tk.Label(self, text='Merge Conflict:')
+        merge_conflict_label.grid(row=4, column=0, sticky='e')
         self.result_text = tk.Text(self, height=30, width=50)
-        self.result_text.grid(row=4, column=0, columnspan=2, pady=10)
+        self.result_text.grid(row=5, column=0, columnspan=2, pady=10)
 
         merge_button = tk.Button(
             self,
@@ -374,44 +465,58 @@ class MergePage(tk.Frame):
                 merge_main_var.get(), merge_target_var.get()
             ),
         )
-        merge_button.grid(row=5, column=0, columnspan=2, pady=10)
+        merge_button.grid(row=6, column=0, columnspan=2, pady=10)
 
         conflict_button = tk.Button(
             self,
             text='solve conflict',
             command=lambda: self.after_merge_GUI(
-                merge_main_var.get(), merge_target_var.get()
+                merge_main_var.get(), merge_target_var.get(), self.fixed_sql_script_var.get()
             ),
         )
-        conflict_button.grid(row=5, column=2, columnspan=5, pady=10)
+        conflict_button.grid(row=6, column=2, columnspan=5, pady=10)
 
 
     def merge_GUI(self, main_bname, target_bname):
         try:
             is_merged, conflict_msg = merge.merge(main_bname, target_bname)
             if is_merged:
-                messagebox(conflict_msg)
+                messagebox.showinfo('Merge', conflict_msg)
             else:
                 self.result_text.delete(1.0, tk.END)  # Clear previous content
                 self.result_text.insert(tk.END, conflict_msg)  # Update with the return value
                 print(main_bname, target_bname)
-        
+                messagebox.showinfo('Merge', conflict_msg)
         except Exception as e:
             print(e)
             messagebox.showinfo('Merge', e)
     
     def after_merge_GUI(self, main_bname, target_bname, fixed_sql_script):
         try:
-            merge.merge_after_conflict_fixed(main_bname, target_bname, fixed_sql_script)
+            is_merged, conflict_msg = merge.merge_after_conflict_fixed(main_bname, target_bname, fixed_sql_script)
+            if is_merged:
+                messagebox.showinfo('Merge', conflict_msg)
+            else:
+                self.result_text.delete(1.0, tk.END)  # Clear previous content
+                self.result_text.insert(tk.END, conflict_msg)  # Update with the return value
+                self.update_merge_conflict_entry(fixed_sql_script, self.fixed_sql_script_var)
+                print(main_bname, target_bname)
         
         except Exception as e:
             print(e)
             messagebox.showinfo('Merge', e)
 
-    def update_merge_main_entry(self, value, conflict_var):
-        self.merge_main_entry = tk.Entry(self, textvariable=conflict_var)
+    def update_merge_conflict_entry(self, value):
+        self.merge_conflict_entry.delete(0, tk.END)  # Clear previous content
+        self.merge_conflict_entry.insert(0, value)
+        
+    def get_current_branch(self):
+        # Retrieve the current branch using your implementation
+
+        # Update the merge_main_entry widget with the current branch
         self.merge_main_entry.delete(0, tk.END)  # Clear previous content
-        self.merge_main_entry.insert(0, value)
+        self.merge_main_entry.insert(0, str(globals.current_branch_name))
+
 
 app = MyApp()
 app.geometry("800x600")

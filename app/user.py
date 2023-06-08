@@ -149,6 +149,8 @@ def log():
         globals.vc_cursor.execute("USE vcdb;")
         globals.vc_cursor.execute(f"select name, version, time, uid, msg from branch, commit where branch.bid = commit.bid and commit.bid = '{globals.current_bid}';")
         result = globals.vc_cursor.fetchall()
+        current_branch_name = result
+        globals.current_branch_name = current_branch_name
         print("===============")
         print(result)
         print("Log Successfully.")
@@ -156,4 +158,20 @@ def log():
     
     except Exception as e:
         return("Log error: ",e)
-    return
+
+def getBnameFromBid():
+    try:
+        print("=============== into getBnameFromBid function ==============")
+        print(globals.vc_cursor)
+        globals.vc_cursor.execute("USE vcdb;")
+        globals.vc_cursor.execute(f"select name from branch where branch.bid = '{globals.current_bid}';")
+        result = globals.vc_cursor.fetchone()[0]
+        print("===============")
+        print(result)
+        current_branch_name = result
+        globals.current_branch_name = current_branch_name
+        print("Get Bname Successfully.")
+        return
+    
+    except Exception as e:
+        return("Get error: ",e)

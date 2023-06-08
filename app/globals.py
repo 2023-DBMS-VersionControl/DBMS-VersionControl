@@ -2,6 +2,7 @@ def globalvar_initiation():
     global userdb_name
     global current_version
     global current_bid
+    global current_branch_name
     global vc_connect
     global user_connect
     global vc_cursor
@@ -11,10 +12,12 @@ def globalvar_initiation():
     global user_pwd
     global user_port
     global user_name
+    
 
     userdb_name = None
     current_version = None
     current_bid = None
+    current_branch_name = None
     vc_connect = None
     user_connect = None
     vc_cursor = None
@@ -24,6 +27,7 @@ def globalvar_initiation():
     user_pwd = None
     user_port = None
     user_name = None
+    
 
 
 globalvar_initiation()
