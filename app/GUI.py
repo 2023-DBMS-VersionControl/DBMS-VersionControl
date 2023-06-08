@@ -284,7 +284,7 @@ class CommitPage(tk.Frame):
     def commit_user(self, msg):
         try:
             print(globals.vc_connect, globals.user_cursor, globals.vc_cursor, globals.current_uid, globals.current_bid)
-            commit.commit(msg)
+            globals.current_version = commit.commit(msg)
             messagebox.showinfo('Commit', "Commit successfully.")
         except Exception as e:
             print(e)
@@ -300,12 +300,13 @@ class LogPage(tk.Frame):
         label.grid(row=0, column=0, columnspan=2, pady=10, padx=10)
 
         self.log_tree = ttk.Treeview(self, show="headings")
-        self.log_tree["columns"] = ("Version", "Time", "UID", "Message")
+        self.log_tree["columns"] = ("Branch Name", "Version", "Time", "UID", "Message")
+        self.log_tree.heading("Branch Name", text="Branch Name")
         self.log_tree.heading("Version", text="Version")
         self.log_tree.heading("Time", text="Time")
         self.log_tree.heading("UID", text="UID")
         self.log_tree.heading("Message", text="Message")
-        self.log_tree.tag_configure("center", anchor="center")
+        self.log_tree.tag_configure("center", anchor='center')
         self.log_tree.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
 
         log_button = tk.Button(
@@ -327,11 +328,12 @@ class LogPage(tk.Frame):
     def populate_log_tree(self, result):
         self.log_tree.delete(*self.log_tree.get_children())
         for row in result:
-            version = row[0]
-            time = row[1]
-            uid = row[2]
-            message = row[3]
-            self.log_tree.insert("", tk.END, values=(version, time, uid, message), tags=("center",))
+            bname = row[0]
+            version = row[1]
+            time = row[2]
+            uid = row[3]
+            message = row[4]
+            self.log_tree.insert("", tk.END, values=(bname, version, time, uid, message), tags=("center",))
 
 
 
@@ -377,7 +379,7 @@ class MergePage(tk.Frame):
         conflict_button = tk.Button(
             self,
             text='solve conflict',
-            command=lambda: self.merge_GUI(
+            command=lambda: self.after_merge_GUI(
                 merge_main_var.get(), merge_target_var.get()
             ),
         )
@@ -386,10 +388,13 @@ class MergePage(tk.Frame):
 
     def merge_GUI(self, main_bname, target_bname):
         try:
-            conflict_msg = merge.merge(main_bname, target_bname)
-            self.result_text.delete(1.0, tk.END)  # Clear previous content
-            self.result_text.insert(tk.END, conflict_msg)  # Update with the return value
-            print(main_bname, target_bname)
+            is_merged, conflict_msg = merge.merge(main_bname, target_bname)
+            if is_merged:
+                messagebox(conflict_msg)
+            else:
+                self.result_text.delete(1.0, tk.END)  # Clear previous content
+                self.result_text.insert(tk.END, conflict_msg)  # Update with the return value
+                print(main_bname, target_bname)
         
         except Exception as e:
             print(e)

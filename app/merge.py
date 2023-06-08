@@ -127,23 +127,22 @@ def merge_by_merged_dict(main_branch_name, main_tail_version, target_branch_name
     merged_sql_script = generate_sql_diff({}, merged_schema_dict)
 
     # Update userdb
-    try:
-        update_result = update_userdb_schema(merged_sql_script)
-    except Exception as e:
-        return e
-    
+    update_result = update_userdb_schema(merged_sql_script)
+
     # Successfully update userdb
     if update_result[0]:
         # Call commit(msg) and get version number
         msg = f"Merge {target_branch_name} into {main_branch_name}"
         merged_version = commit(msg)
-        # Insert into merge table
-        insert_into_merge_table(merged_version, main_tail_version, target_tail_version)
-        return update_result[0], msg
-    
+        if merged_version:
+            # Insert into merge table
+            insert_into_merge_table(merged_version, main_tail_version, target_tail_version)
+            return update_result[0], msg
+        else:
+            return False, "Failed to commit!"
     # Failed to update userdb
-    # else:
-    #     return update_result
+    else:
+        return update_result
 
 
     """
@@ -305,15 +304,8 @@ def merge_after_conflict_fixed(main_branch_name, target_branch_name, fixed_sql_s
         return is_merged, update_result[1]
 
 # TEST
-from tkinter import messagebox
 if __name__ == '__main__':
-    try:
-        print("try")
-        merge('main', 'age')
-    except Exception as e:
-        print()
-        print("merge error", e)
-
+    merge('branch1', 'branch2')
 #     fixed_sql_script = """
 # CREATE TABLE `teacher` (
 # `Name` varchar(10) NOT NULL, 

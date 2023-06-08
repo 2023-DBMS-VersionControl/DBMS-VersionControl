@@ -2,9 +2,9 @@ import mysql.connector as m
 import uuid
 import os
 import datetime
-import globals
 from dump import dump
 from diff import get_diff
+import globals
 
 def commit(msg):  # use globals
     
@@ -12,13 +12,11 @@ def commit(msg):  # use globals
     query = "SELECT * FROM user WHERE uid = '%s';" % globals.current_uid
     globals.vc_cursor.execute(query)
     userInfo = globals.vc_cursor.fetchone()
-    # print("userInfo: ", userInfo)
     
     # get 目前 branch 的相關資訊
     query = "SELECT * FROM branch WHERE bid = '%s'" % globals.current_bid
     globals.vc_cursor.execute(query)
     branchInfo = globals.vc_cursor.fetchone()
-    # print("branchInfo: ", branchInfo)
     
     # check if user can commit or not
     if (userInfo[3] != None):  # user 有 commit 過
@@ -86,26 +84,9 @@ def commit(msg):  # use globals
     
     print("Successfully commit")
     globals.vc_connect.commit()
-    
-    
-# if __name__ == '__main__':
-#     # connect setting
-#     user_connection = m.connect(host='localhost', user='root',password='secure1234', database='db_class')
-#     user_cur = user_connection.cursor(buffered=True)
-    
-#     vc_connection = m.connect(host='localhost', user='root',password='secure1234', database='vcdb')
-#     vc_cur = vc_connection.cursor(buffered=True)
-    
-#     # test data
-#     userID = '3c30937d-fe2c-4f65-8cbf-619d5d6b7edb'
-#     branchID = '1'
-#     msg = '2nd commit'
 
-#     commit(vc_connection, user_cur, vc_cur, userID, branchID, msg)
+    return version
     
-#     # close connection
-#     user_cur.close()
-#     user_connection.close()
-#     vc_cur.close()
-#     vc_connection.close()
-    
+if __name__ == '__main__':
+    msg = "commit"
+    commit(msg)

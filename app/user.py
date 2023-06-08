@@ -147,7 +147,7 @@ def log():
         print("=============== into log function ==============")
         print(globals.vc_cursor)
         globals.vc_cursor.execute("USE vcdb;")
-        globals.vc_cursor.execute(f"select version, time, uid, msg from commit where bid = '{globals.current_bid}';")
+        globals.vc_cursor.execute(f"select name, version, time, uid, msg from branch, commit where branch.bid = commit.bid and commit.bid = '{globals.current_bid}';")
         result = globals.vc_cursor.fetchall()
         print("===============")
         print(result)
