@@ -502,13 +502,13 @@ class HopPage(tk.Frame):
         parse_button = tk.Button(
             self,
             text='Hop',
-            command=lambda: self.app_checkout(
+            command=lambda: self.hopping(
                 destination.get()
             ),
         )
         parse_button.grid(row=5, column=0, columnspan=2, pady=10)
 
-    def app_checkout(self, destination):
+    def hopping(self, destination):
         return_msg = hop.hop(destination)
         messagebox.showinfo('Hop Result:', return_msg)
 
