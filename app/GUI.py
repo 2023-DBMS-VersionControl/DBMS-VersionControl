@@ -443,7 +443,7 @@ class MergePage(tk.Frame):
         #main branch
         merge_main_label = tk.Label(self, text='To:')
         merge_main_label.grid(row=2, column=0, sticky='e')
-        self.merge_main_entry = tk.Entry(self, textvariable=merge_main_var)
+        self.merge_main_entry = tk.Entry(self, textvariable=merge_main_var )
         self.merge_main_entry.grid(row=2, column=1)
         get_branch_button = tk.Button(
             self,
@@ -455,8 +455,9 @@ class MergePage(tk.Frame):
 
         merge_conflict_label = tk.Label(self, text='Merge Conflict:')
         merge_conflict_label.grid(row=4, column=0, sticky='e')
-        self.result_text = tk.Text(self, height=30, width=50)
-        self.result_text.grid(row=5, column=0, columnspan=2, pady=10)
+        self.conflict_text_entry = tk.Text(self, height=30, width=50)
+        # self.conflict_text_entry = tk.Entry(self, textvariable=self.fixed_sql_script_var, height=30, width=50)
+        self.conflict_text_entry.grid(row=5, column=1, columnspan=2, pady=10)
 
         merge_button = tk.Button(
             self,
@@ -465,50 +466,47 @@ class MergePage(tk.Frame):
                 merge_main_var.get(), merge_target_var.get()
             ),
         )
-        merge_button.grid(row=6, column=0, columnspan=2, pady=10)
+        merge_button.grid(row=3, column=1, columnspan=2, pady=10)
 
         conflict_button = tk.Button(
             self,
             text='solve conflict',
             command=lambda: self.after_merge_GUI(
-                merge_main_var.get(), merge_target_var.get(), self.fixed_sql_script_var.get()
+                merge_main_var.get(), merge_target_var.get(), self.conflict_text_entry.get(1.0,tk.END)
             ),
         )
-        conflict_button.grid(row=6, column=2, columnspan=5, pady=10)
+        conflict_button.grid(row=6, column=0, columnspan=5, pady=10)
 
 
     def merge_GUI(self, main_bname, target_bname):
         try:
-            is_merged, conflict_msg = merge.merge(main_bname, target_bname)
-            if is_merged:
-                messagebox.showinfo('Merge', conflict_msg)
-            else:
-                self.result_text.delete(1.0, tk.END)  # Clear previous content
-                self.result_text.insert(tk.END, conflict_msg)  # Update with the return value
+            is_merged, conflict_script = merge.merge(main_bname, target_bname)
+            if is_merged is False:
+                self.conflict_text_entry.delete(1.0, tk.END)  # Clear previous content
+                self.conflict_text_entry.insert(tk.END, conflict_script)  # Update with the return value
                 print(main_bname, target_bname)
-                messagebox.showinfo('Merge', conflict_msg)
+                # messagebox.showinfo('Merge', conflict_script)
         except Exception as e:
             print(e)
             messagebox.showinfo('Merge', e)
     
     def after_merge_GUI(self, main_bname, target_bname, fixed_sql_script):
         try:
-            is_merged, conflict_msg = merge.merge_after_conflict_fixed(main_bname, target_bname, fixed_sql_script)
-            if is_merged:
-                messagebox.showinfo('Merge', conflict_msg)
-            else:
-                self.result_text.delete(1.0, tk.END)  # Clear previous content
-                self.result_text.insert(tk.END, conflict_msg)  # Update with the return value
-                self.update_merge_conflict_entry(fixed_sql_script, self.fixed_sql_script_var)
+            is_merged, conflict_msg, conflict_script= merge.merge_after_conflict_fixed(main_bname, target_bname, fixed_sql_script)
+            if is_merged is False:
+                self.conflict_text_entry.delete(1.0, tk.END)  # Clear previous content
+                self.conflict_text_entry.insert(tk.END, conflict_script)  # Update with the return value
+                # self.update_merge_conflict_entry(fixed_sql_script, self.fixed_sql_script_var)
                 print(main_bname, target_bname)
+                messagebox.showinfo('Merge', conflict_msg)
         
         except Exception as e:
             print(e)
             messagebox.showinfo('Merge', e)
 
     def update_merge_conflict_entry(self, value):
-        self.merge_conflict_entry.delete(0, tk.END)  # Clear previous content
-        self.merge_conflict_entry.insert(0, value)
+        self.conflict_text_entry.delete(0, tk.END)  # Clear previous content
+        self.conflict_text_entry.insert(0, value)
         
     def get_current_branch(self):
         # Retrieve the current branch using your implementation

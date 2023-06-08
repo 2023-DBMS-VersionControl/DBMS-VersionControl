@@ -127,7 +127,7 @@ def merge_by_merged_dict(main_branch_name, main_tail_version, target_branch_name
     merged_sql_script = generate_sql_diff({}, merged_schema_dict)
 
     # Update userdb
-    update_result = update_userdb_schema(merged_sql_script)
+    update_result = update_userdb_schema(main_branch_name, merged_sql_script)
 
     # Successfully update userdb
     if update_result[0]:
@@ -240,7 +240,6 @@ def merge(main_branch_name, target_branch_name):
     else:
         merged_schema_dict = merge_schema(main_schema_dict, target_schema_dict)
         result = merge_by_merged_dict(main_branch_name, main_tail_version, target_branch_name, target_tail_version, merged_schema_dict)
-        #TODO!!! 可能因為fk table順序問題造成error 該如何處理？？
         return result
 
 
@@ -251,25 +250,33 @@ def sql_script_into_list(sql_script):
         sql_script_list[i] = sql_script_list[i]+";"
     return sql_script_list
 
-def update_userdb_schema(sql_script):
+def update_userdb_schema(main_branch_name, sql_script):
+    # Drop all tables
+    globals.user_cursor.execute("SHOW Tables") 
+    existed_tables = globals.user_cursor.fetchall()
     try:
-        # Drop all tables
-        globals.user_cursor.execute("SHOW Tables") 
-        existed_tables = globals.user_cursor.fetchall()
         for table in existed_tables:
-            globals.user_cursor.execute(f"DROP TABLE {table[0]}")
+            globals.user_cursor.execute(f"DROP TABLE {table[0]};")
         globals.user_connect.commit()
-        
-        # Execute fixed sql script
-        fixed_sql_script_list = sql_script_into_list(sql_script)
-        for script in fixed_sql_script_list:
-            if script:
-                globals.user_cursor.execute(script)
-            globals.user_connect.commit()
-        return True, "Successfully updated userdb schema!"
     except Exception as e:
-        print(f"Error: {e}")
-        return False, f"Error: {e}"
+        return False, f"When updating userdb schema, drop all tables failed.\nError: {e} "
+    
+    # Execute fixed sql script
+    fixed_sql_script_list = sql_script_into_list(sql_script)
+    globals.user_cursor.execute("SET foreign_key_checks = 0;")
+    for script in fixed_sql_script_list:
+        if script:
+            try:
+                globals.user_cursor.execute(script)
+                globals.user_connect.commit()
+            except Exception as e:
+                # Create original schema
+                main_branch_tail_schema = read_sql_file(f"./branch_tail_schema/{main_branch_name}.sql")
+                globals.user_cursor.execute(main_branch_tail_schema)
+                return False, f"Error: {e}", sql_script
+    globals.user_cursor.execute("SET foreign_key_checks = 1;")
+    return True, "Successfully updated userdb schema!"
+
 
 """
 Merge 2 branches after conflict fixed
@@ -286,7 +293,7 @@ def merge_after_conflict_fixed(main_branch_name, target_branch_name, fixed_sql_s
         return is_merged, f"Branch {target_branch_name} does not exist."
 
     # Execute fixed sql script
-    update_result = update_userdb_schema(fixed_sql_script)
+    update_result = update_userdb_schema(main_branch_name, fixed_sql_script)
 
     # Successfully update userdb schema, return success message
     if update_result[0]:
@@ -301,24 +308,41 @@ def merge_after_conflict_fixed(main_branch_name, target_branch_name, fixed_sql_s
         return is_merged, msg
     # else failed to update userdb schema, return error message
     else:
-        return is_merged, update_result[1]
+        return is_merged, update_result[1], update_result[2]
 
 # TEST
 if __name__ == '__main__':
-    merge('branch1', 'branch2')
-#     fixed_sql_script = """
-# CREATE TABLE `teacher` (
-# `Name` varchar(10) NOT NULL, 
-# `Gender` varchar(20) NOT NULL, 
-# `Department` varchar(20) NOT NULL, 
-# `Id` varchar(20) NOT NULL, 
-# PRIMARY KEY (`Id`));
-# CREATE TABLE `student` (
-# `Name` varchar(20) NOT NULL, 
-# `Department` varchar(20) NOT NULL, 
-# `Grade` int(11) NOT NULL, 
-# `Id` varchar(20) NOT NULL, 
-# `Gender` varchar(20) NOT NULL, 
-# PRIMARY KEY (`Id`));
-# """
-#     merge_after_conflict_fixed('branch1', 'branch2', fixed_sql_script)
+    # merge('branch1', 'branch2')
+    fixed_sql_script = """
+
+CREATE TABLE `course` (
+  `Id` varchar(10) NOT NULL,
+  `Name` varchar(20) NOT NULL,
+  `TeacherID` varchar(20) NOT NULL,
+  KEY fk_teach (`TeacherID`),
+  CONSTRAINT fk_teach FOREIGN KEY (`TeacherID`) REFERENCES teacher (`Id`)
+ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+DROP TABLE IF EXISTS `student`;
+CREATE TABLE `student` (
+  `Id` varchar(20) NOT NULL,
+  `Name` varchar(20) NOT NULL,
+  `Grade` int(11) NOT NULL,
+  `Department` varchar(20) NOT NULL,
+  `Gender` varchar(20) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+DROP TABLE IF EXISTS `teacher`;
+CREATE TABLE `teacher` (
+  `Id` varchar(20) NOT NULL,
+  `Name` varchar(10) NOT NULL,
+  `Department` varchar(20) NOT NULL,
+  `Gender` varchar(20) NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+
+"""
+    print(f"merge_after_conflict_fixed: {merge_after_conflict_fixed('branch1', 'branch2', fixed_sql_script)}")
