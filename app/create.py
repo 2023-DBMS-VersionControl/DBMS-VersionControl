@@ -5,6 +5,7 @@ import globals
 import sys
 import os
 
+
 # remote vcdb info
 vcdb_user = os.getenv("VCDB_USER")
 vcdb_pwd = os.getenv("VCDB_PWD")
